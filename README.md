@@ -1,153 +1,599 @@
-## 🏦 Bank Management System (C++ Project)
+// Bank Project.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
 
-This project is a simple **Bank Management System** written in **C++**, designed to manage client data such as adding, deleting, updating, searching, and performing transactions (deposit/withdraw).
-All client information is stored in a text file (`file.txt`) and managed through **Structs** and **Vectors**.
+#include"LibInput.h"
+const string path = "file.txt";
 
----
 
-### 📁 Main Components
+struct BankInfo
+{
+	string BankAccount;
+	string PinCode;
+	string Name;
+	string Phone;
+	string Balance;
+	bool flage = false;
+};
 
-#### 🔹 1. Struct: `BankInfo`
+void ShowManue()
+{
+	cout << "==============================" << endl;
+	cout << "Main Manue Screen\n";
+	cout << "=============================="<<endl;
+	cout << "[1] Show Client List."<<endl;
+	cout << "[2] Add New Client." << endl;
+	cout << "[3] Delete Client." << endl;
+	cout << "[4] Update Client Info." << endl;
+	cout << "[5] Find Client." << endl;
+	cout << "[6] TransAction." << endl;
+	cout << "[7] Exit." << endl;
+	//system("pause");
+}
 
-A structure that defines a single bank client, containing:
+void BackMainManue() {
+	system("pause");
+	system("cls");
+	ShowManue();
+}
+// Show Client Section
 
-* `BankAccount` — account number
-* `PinCode` — client PIN code
-* `Name` — client full name
-* `Phone` — client phone number
-* `Balance` — client current balance
-* `flage` — helper variable
+bool IsCharInSeparator(char Char, string Separator) {
+	for (char& x : Separator) {
+		if (Char == x) {
+			return true;
+		}
+	}
+	return false;
+}
 
----
+// Split String Line And Append It In Vector
+vector<string> ConvertLineOFStringWithSepToVector(string sent, string Sep = "#//#") {
+	vector<string>VecotOfStringAfterSplitting;
+	string NewPhrase = "";
+	for (int x = 0; x < sent.length(); x++) {
+		bool Check = IsCharInSeparator(sent[x], Sep);
+		if (!Check) {
+			NewPhrase += sent[x];
+		}
 
-#### 🔹 2. Main Menu
+		else if (Check && NewPhrase != "") {
+			VecotOfStringAfterSplitting.push_back(NewPhrase);
+			NewPhrase = "";
+		}
+	}
+	if (NewPhrase != "")
+		VecotOfStringAfterSplitting.push_back(NewPhrase);
 
-The main interface is displayed through `ShowManue()`:
+	return VecotOfStringAfterSplitting;
+}
+// Splitting The Vector To Struct Of Client By Indexs
+// And Retuen Struct Of Values
+BankInfo ConvertVectorToStruct(vector<string>&StringVector) {
 
-```
-[1] Show Client List.
-[2] Add New Client.
-[3] Delete Client.
-[4] Update Client Info.
-[5] Find Client.
-[6] Transaction.
-[7] Exit.
-```
+	BankInfo ClientInfo;
+	ClientInfo.BankAccount = StringVector[0];
+	ClientInfo.PinCode = StringVector[1];
+	ClientInfo.Name = StringVector[2];
+	ClientInfo.Phone = StringVector[3];
+	ClientInfo.Balance = StringVector[4];
 
----
+	return ClientInfo;
+}
+//Read File And Upload it In The Vector Of Struct
+vector<BankInfo> readFileAndAppenditInVector(string path) {
 
-### ⚙️ Core Functionalities
+	vector<string>vString;
+	vector<BankInfo>vStruct;
+	BankInfo ClientInfo;
+	fstream file;
 
-#### 🧾 Reading the File
+	file.open(path, ios::in);
+	if (file.is_open()) {
+		string line ;
+		while (getline(file, line)) {
+			if (line != "") // Check If Line Not Empty
+			{
+				vString = ConvertLineOFStringWithSepToVector(line);
+				ClientInfo = ConvertVectorToStruct(vString);
+				vStruct.push_back(ClientInfo);
+			}
 
-* `readFileAndAppenditInVector()` loads data from the text file and stores it into a `vector<BankInfo>`.
-* Helper functions:
+		}
+	}file.close();
+	return vStruct;
+}
 
-  * `ConvertLineOFStringWithSepToVector()` splits each line using `#//#` separator.
-  * `ConvertVectorToStruct()` converts the vector into a `BankInfo` struct.
+void Header(vector<BankInfo>& vStructClients) {
+	cout << "\n";
+	cout <<setw(50)<< "We Have [" << vStructClients.size()<<"] Clients.\n";
+	cout << "_______________________________________________________________________________________________________\n\n";
+	cout << setw(6)<<left << " BankAccount ";
+	cout << setw(6) << left << "| PinCode ";
+	cout << setw(30) << left << "|\t\t\tName";
+	cout << setw(10) << left << "|\tPhone\t";
+	cout << setw(10) << left << "|  Balance";
+	cout << "\n_______________________________________________________________________________________________________\n\n";
 
----
+}
+void ShowClients(vector<BankInfo>& vStructClients) {
+	Header(vStructClients);
+	for (BankInfo &client  : vStructClients) {
+		cout << setw(13) << left << client.BankAccount
+			<< "| " << setw(8) << left << client.PinCode
+			<< "| " << setw(49) << left << client.Name
+			<< "| " << setw(14) << left << client.Phone
+			<< "| " << setw(9) << left << client.Balance;
+		cout << "\n";
 
-#### 👥 Display Clients
+	}
+	cout << "_______________________________________________________________________________________________________\n\n";
 
-* `ShowClients()` prints all clients in a formatted table using `setw()`.
-* `Header()` prints the table header.
+}
+//-------------------------------------------------------------------------------------------------------
+ 
+														// Add Client Section
 
----
+string CheckBankAccountToGetNewID(string path ) {
+	vector<BankInfo>vStructClients;
+	vStructClients = readFileAndAppenditInVector(path);
+	string UserInputBankAccount = LibInput::UserInput("Enter BankAccount : ");
 
-#### ➕ Add New Client
+	for (BankInfo& client : vStructClients) {
 
-* `AddMoreClients()` allows adding one or more clients.
-* `CheckBankAccountToGetNewID()` checks if the account already exists.
-* `AddNewClient()` and `WriteFileByVstruct()` save new data to the file.
+			while (UserInputBankAccount == client.BankAccount) {
+				cout << "\nBankAccount is already extists\n";
+				UserInputBankAccount = LibInput::UserInput("Enter BankAccount : ");
+				
+			}
+	}
+	return UserInputBankAccount;
 
----
+}
+vector<BankInfo> AppendNewClientToVstruct( vector<BankInfo>& vStructClients) {
+	BankInfo client;
+	client.BankAccount = CheckBankAccountToGetNewID(path);
+	cout << "Enter Your PinCode : ";
+	getline(cin >> ws, client.PinCode);
+	cout << "Enter Your Name : ";
+	getline(cin, client.Name);
+	cout << "Enter Your Phone : ";
+	cin >> client.Phone;
+	cout << "Enter Your Balance : ";
+	cin >> client.Balance;
+	vStructClients.push_back(client);
+	return 	 vStructClients;
+}
+string ConvertStructToString( BankInfo stClient , string Sep = "#//#") {
+	string Client = "";
+	
+	Client = stClient.BankAccount + Sep +
+		stClient.PinCode + Sep +
+		stClient.Name + Sep +
+		stClient.Phone + Sep +
+		stClient.Balance;
 
-#### ❌ Delete Client
+	return Client;
+}
+void AddNewClient(string path, vector<BankInfo>& vStructClients) {
 
-* `FindClientByBankAccount()` locates a client and displays details before deletion.
-* `RemoveClientOfVector()` removes the client from the list.
-* `DeleteClient()` performs the final deletion and updates the file.
+	vector<BankInfo>NewvStructClients = AppendNewClientToVstruct(vStructClients);
+	fstream file;
+	file.open(path, ios::out);
+	if (file.is_open()) {
+		for (BankInfo &client : NewvStructClients) {
+			file << ConvertStructToString(client) << endl;
+		}
+		file.close();
+	}
+	cout << "\nThe Process is Sucsseced"<<endl;
+}
+void AddMoreClients(string path, vector<BankInfo>& vStructClients) {
+	cout << "\n___________________________\n";
+	cout << "\n\tAdd Client\n";
+	cout << "___________________________\n";
+	string user = "y";
+	cout << "Do you Want Add Client [y/n] : ";
+	getline(cin , user);
 
----
+	while (user == "y" || user == "Y") {
+		AddNewClient(path, vStructClients);
+		cout << "\nDo you Want Add More Client [y/n] : ";
+		cin.ignore(numeric_limits<streamsize>::max(), '\n'); // امسح الـ newline اللي باقي
+		getline(cin, user);
+		system("cls");
+	}
+	
+}
+//____________________________________________________________________________________
+											// Delete Client
+string FindClientByBankAccount(string path , vector <BankInfo> &vStructClients) {
+	vStructClients = readFileAndAppenditInVector(path);
+	string UserInputBankAccount = LibInput::UserInput("Enter BankAccount : ");
+	for (BankInfo& Client : vStructClients) {
 
-#### ✏️ Update Client Info
+		if (UserInputBankAccount == Client.BankAccount) {
+			cout << "\nBankAccount : " << Client.BankAccount << endl;
+			cout << "PinCode : " << Client.PinCode << endl;
+			cout << "Name : " << Client.Name << endl;
+			cout << "Phone : " << Client.Phone << endl;
+			cout << "Balance : " << Client.Balance << endl;
+		
+			return Client.BankAccount;
+		}
+	}
+	return "";
+}
+void WriteFileByVstruct(string path , vector <BankInfo>& vStructClients) {
+	fstream file;
+	file.open(path, ios::out);
+	if (file.is_open()) {
+		for (BankInfo &client : vStructClients) {
 
-* `stUpdateClient()` finds and edits a client’s data.
-* `UpdateClient()` saves the updated information to the file.
+			file << ConvertStructToString(client) << endl;
+		}
+		
+		file.close();
+	}
+}
+vector<BankInfo> RemoveClientOfVector(string path, vector <BankInfo>& vStructClients) {
+	char Choice = 'y';
+	vector<BankInfo> vAfterDeleted;
+	string Id = FindClientByBankAccount(path, vStructClients);
+	if (Id != "") {
 
----
+		cout << "Are You Sure Want Delete  : [y/n] : ";
+		cin >> Choice;
+		if (tolower(Choice) == 'y') {
+			for (BankInfo& client : vStructClients) {
+				if (client.BankAccount != Id) {
+					vAfterDeleted.push_back(client);
+				}
+			}
+		
+			cout << "\nThe Client is Deleted.\n" << endl;
+			vStructClients = vAfterDeleted;
+			return vStructClients;
+		}
+		else
+		{
+			return vStructClients;
+		}
+	}
 
-#### 🔍 Find Client
 
-* `FindClient()` displays client details based on account number.
-* `FindClientFunc()` manages the user interface for searching.
+	else {
+		cout << "Wrong Bank Account \n";
+		return vStructClients;
+    }
+}
 
----
+void DeleteClient(string path, vector<BankInfo>& vStructClients) {
+	cout << "\n___________________________\n";
+	cout << "\n\tDelete Client\n";
+	cout << "___________________________\n\n";
+	
+	vector<BankInfo> vS = RemoveClientOfVector(path, vStructClients);
+	WriteFileByVstruct(path, vS);
+}
 
-### 💵 Transactions Section
 
-#### Menu:
+											// Update Client
 
-`ShowTransAction()` displays:
 
-```
-[1] Deposit.
-[2] Withdraw.
-[3] Total Balance.
-[4] Main Menu.
-```
+bool FindClient(string Input , vector<BankInfo>&VectorOfStructures) {
+	
+	for (int x = 0; x < VectorOfStructures.size(); x++) {
+		if (Input == VectorOfStructures[x].BankAccount) {
+			cout << "\n";
+			cout << "\t" << "BankAccount : " << setw(9) << VectorOfStructures[x].BankAccount << endl;
+			cout << "\t" << "PinCode : " << setw(4) << VectorOfStructures[x].PinCode << endl;
+			cout << "\t" << "Name : " << setw(5) << VectorOfStructures[x].Name << endl;
+			cout << "\t" << "Phone : " << setw(9) << VectorOfStructures[x].Phone << endl;
+			cout << "\t" << "BankBalance : " << setw(9) << VectorOfStructures[x].Balance << endl;
+			return true;
+		}
+	}
+	cout << "\nYour ID not In Bank\n";
+	return false;
+}
 
-#### Deposit:
+vector<BankInfo> stUpdateClient( vector<BankInfo>& VectorOfStructures) {
+	string Input = LibInput::UserInput("Enter ID : ");
+	char Choise = 'y';
+	if (FindClient(Input, VectorOfStructures)) {
 
-* `Deposit()` calls `UpdateDeposit()`.
-* The client is found using `IsBankAccountInBank()`, then balance is increased and written back to the file.
+		cout << "Are You Sure Want Update Info  : [y/n]: ";
+		cin >> Choise;
+		if (tolower(Choise) == 'y') {
+			for (int x = 0; x < VectorOfStructures.size(); x++) {
+				if (Input == VectorOfStructures[x].BankAccount) {
+					cout << "Enter Your PinCode : ";
+					getline(cin >> ws, VectorOfStructures[x].PinCode);
+					cout << "Enter Your Name : ";
+					getline(cin, VectorOfStructures[x].Name);
+					cout << "Enter Your Phone : ";
+					getline(cin, VectorOfStructures[x].Phone);
+					cout << "Enter Your BankBalance : ";
+					getline(cin, VectorOfStructures[x].Balance);
+					cout << "your Process Is succsseded\n";
+					return VectorOfStructures;
+				}
+			}
+		}
+		else
+		{
+			return VectorOfStructures;
 
-#### Withdraw:
+		}
+	}
+	else
+	{
+		cout << "\nFalied Process\n";
+		return VectorOfStructures;
+	}
+	
 
-* `WithDrow()` calls `UpdateWithDrow()`.
-* Checks if the amount is valid (not greater than current balance) before updating.
+	
+}
 
-#### Total Balance:
+void UpdateClient(string path, vector <BankInfo>& VectorOfStructures) {
+	cout << "\n___________________________\n";
+	cout << "\n\tUpdate Client\n";
+	cout << "___________________________\n\n";
+	vector < BankInfo> vS = stUpdateClient(VectorOfStructures);
+	WriteFileByVstruct(path, vS);													
+}
+														//Find Client
 
-* `TotalBalance()` calculates and displays the total sum of all client balances.
+bool FindClient(vector<BankInfo>&VectorOfStructures) {
+	string Input = LibInput::UserInput("Enter BankAccount : ");
+	for (int x = 0; x < VectorOfStructures.size(); x++) {
+		if (Input == VectorOfStructures[x].BankAccount) {
+			Header(VectorOfStructures);
+				cout << setw(13) << left << VectorOfStructures[x].BankAccount
+					<< "| " << setw(8) << left << VectorOfStructures[x].PinCode
+					<< "| " << setw(49) << left <<VectorOfStructures[x].Name
+					<< "| " << setw(14) << left <<VectorOfStructures[x].Phone
+					<< "| " << setw(9) << left << VectorOfStructures[x].Balance;
+				cout << "\n";
 
----
+			
+			cout << "_______________________________________________________________________________________________________\n\n";
+			return true;
+		}
+	}
+	cout << "\nYour ID not In Bank\n";
+	return false;
+}
 
-### 🧩 Helper Functions
 
-* `IsCharInSeparator()` and `ConvertLineOFStringWithSepToVector()` — handle string parsing.
-* `WriteFileByVstruct()` — writes vector data back to the file.
-* `UpdateStructInfo()` — updates a specific client inside the vector after changes.
+void FindClientFunc(vector<BankInfo>&VectorOfStructures) {
+	cout << "\n___________________________\n";
+	cout << "\n\tFind Client\n";
+	cout << "___________________________\n\n";
+	FindClient(VectorOfStructures);
+	
+}
+//-----------------------------------------------------------------------------------------------
+//								********[Transaction]*********
+														
+void  ShowTransAction() {
+	cout << "==============================" << endl;
+	cout << "TransAction\n";
+	cout << "==============================" << endl;
+	cout << "[1] Deposit." << endl;
+	cout << "[2] WithDrow." << endl;
+	cout << "[3] Total Balance." << endl;
+	cout << "[4] Main Manue." << endl;
+	//int Num = LibInput::GetValidatedInt("Enter Your Choice : ");
 
----
+	
+}
 
-### 🖥️ Main Function (`main()`)
 
-* Loads all client data into memory using `readFileAndAppenditInVector()`.
-* Calls `AllFunc()` to run the main program loop and handle user choices.
+//								********Deposit********
 
----
+BankInfo IsBankAccountInBank(vector<BankInfo>& VectorOfStructures)
+{
+	string ID = LibInput::UserInput("\nEnter BankAccount : ");
+	while (true) {
+		for (BankInfo& Client : VectorOfStructures) {
+			if (ID == Client.BankAccount) {
+				cout << "\nBankAccount : " << Client.BankAccount << endl;
+				cout << "PinCode : " << Client.PinCode << endl;
+				cout << "Name : " << Client.Name << endl;
+				cout << "Phone : " << Client.Phone << endl;
+				cout << "Balance : " << Client.Balance << endl;
 
-### ✅ Features
+				return  Client;
+			}
+		}
+		ID = LibInput::UserInput("\nEnter BankAccount : ");
+	}
+}
+void UpdateStructInfo(BankInfo Client , vector<BankInfo>& VectorOfStructures) {
 
-* File-based data persistence.
-* Organized client management using Struct and Vector.
-* Interactive console-based interface.
-* Clear separation of logic (Add, Delete, Update, Search, Transactions).
+	for (BankInfo& CurrentClient : VectorOfStructures) {
+		if (CurrentClient.BankAccount == Client.BankAccount) {
+			CurrentClient.BankAccount = Client.BankAccount;
+			CurrentClient.PinCode = Client.PinCode;
+			CurrentClient.Name = Client.Name;
+			CurrentClient.Phone = Client.Phone;
+			CurrentClient.Balance = Client.Balance;
+		}
+	}
+}
+void UpdateDeposit(vector<BankInfo>& VectorOfStructures) {
+	BankInfo Client = IsBankAccountInBank(VectorOfStructures);
+	cout << "[Your Balance Now : ["<< Client.Balance<<"]\n";
+	string Amount = LibInput::UserInput("\n-----------\nEnter Amount : ");
+	double total = stod(Client.Balance) + stod(Amount);
+	Client.Balance = to_string(round(float(total)));
+	cout << "\n[Your Balance After Deposit : [" << Client.Balance << "]\n";
 
----
+	UpdateStructInfo(Client, VectorOfStructures);
+}
+void Deposit(vector<BankInfo>& VectorOfStructures) {
+	cout << "\n___________________________\n";
+	cout << "\n\tDeposit\n";
+	cout << "___________________________\n\n";
+	UpdateDeposit(VectorOfStructures);
+	//vector < BankInfo> Vstruct =
+	WriteFileByVstruct(path, VectorOfStructures);
 
-### ⚠️ Notes
+}
+//							********WithDrow********
 
-* This system uses a text file instead of a database.
-* Designed for learning and practicing file handling & data management in C++.
-* Compatible with **Visual Studio**, **Code::Blocks**, or any modern C++ IDE.
+void UpdateWithDrow(vector<BankInfo>& VectorOfStructures) {
+	BankInfo Client = IsBankAccountInBank(VectorOfStructures);
+	cout << "[Your Balance Now : [" << Client.Balance << "]\n";
+	string Amount = LibInput::UserInput("\n-----------\nEnter Amount : ");
+	if (stod(Amount) <= stod(Client.Balance)) {
+		double total = stod(Client.Balance) + stod(Amount) * -1;
+		Client.Balance = to_string(round(float(total)));
+		cout << "\n[Your Balance After Deposit : [" << Client.Balance << "]\n";
 
----
+		UpdateStructInfo(Client, VectorOfStructures);
+	}
+	else
+	{
+		cout << "[ Your Amount Now Bigger than you Balance [" << Client.Balance << "] \n";
+	}
 
-🧑‍💻 **Author:** Mustafa
-📅 **Language:** C++
-📂 **Project Type:** Console Application
-📘 **Topic:** File Handling • Structs • Vectors • Banking Logic
+}
+void WithDrow(vector<BankInfo>& VectorOfStructures) {
+	cout << "\n___________________________\n";
+	cout << "\n\tWithDrow\n";
+	cout << "___________________________\n\n";
+	UpdateWithDrow(VectorOfStructures);
+	WriteFileByVstruct(path, VectorOfStructures);
+}
+//							*****TotalBalance********
+void TotalBalance(vector<BankInfo>& VectorOfStructures) {
+	float TotalBalanceOfAllClients = 0;
+	for (BankInfo &client : VectorOfStructures) {
+		TotalBalanceOfAllClients += stof(client.Balance);
+	}
+	cout << "Total Balance Of All Clients is : " << TotalBalanceOfAllClients;
+}
+
+void AllFunc(string path, vector<BankInfo>& vStructClients);
+void TransAction(string path, vector<BankInfo>& VectorOfStructures) {
+	ShowTransAction();
+	int Num = LibInput::GetValidatedInt("Enter Your Choice : ");
+	while (Num > 0 && Num < 5) {
+
+
+		switch (Num) {
+		case 1:
+			Deposit(VectorOfStructures);
+			system("pause");
+			system("cls");
+			break;
+		case 2:
+			WithDrow(VectorOfStructures);
+			system("pause");
+			system("cls");
+			break;
+		case 3:
+			TotalBalance(VectorOfStructures);
+			system("pause");
+			system("cls");
+			break;
+		default:
+			system("cls");
+			AllFunc(path, VectorOfStructures);
+			system("pause");
+			system("cls");
+			break;
+
+		}
+		ShowTransAction();
+		Num = LibInput::GetValidatedInt("Enter Your Choice : ");
+	}
+	system("cls");
+	AllFunc(path, VectorOfStructures);
+	system("pause");
+	system("cls");
+
+
+}
+//-----------------------------------------------------------------
+
+
+void AllFunc( string path , vector<BankInfo>& vStructClients) {
+	int Input ;
+	do
+	{
+		
+		ShowManue();
+	
+		Input = LibInput::GetValidatedInt("\nEnter Number 1-7 : ");
+		system("cls");
+		switch (Input) {
+		case   1:
+			ShowClients(vStructClients);
+			system("pause");
+			system("cls");
+			break;
+		case 2:
+			AddMoreClients(path, vStructClients);
+			system("pause");
+			system("cls");
+			break;
+		case 3:
+			DeleteClient(path, vStructClients);
+			system("pause");
+			system("cls");
+			break;
+
+		case 4:
+			UpdateClient(path, vStructClients);
+			system("pause");
+			system("cls");
+			break;
+
+		case 5:
+			FindClientFunc(vStructClients);
+			system("pause");
+			system("cls");
+			break;
+		case 6:
+			TransAction(path, vStructClients);
+			system("pause");
+			system("cls");
+			break;
+
+		default:
+			break;
+			/*system("pause");
+			system("cls");*/
+		}
+	} while (Input > 0 && Input < 7);
+	//BackMainManue();
+}
+
+
+
+int main()
+{
+	vector<BankInfo> vStructClients = readFileAndAppenditInVector(path);
+	//ShowClients(vStructClients);
+
+
+	AllFunc(path , vStructClients);
+									//Add Client
+	//AddMoreClients(path , vStructClients);
+	//ReadVector(vStructClients);
+	
+									// Delete Client
+	//DeleteClient(path , vStructClients);
+
+									//Update Client Info
+	//UpdateClient(path, vStructClients);
+								//Find Client
+	//FindClientFunc(vStructClients);
+	//AllFunc( path, vStructClients);
+	return 0;
+}
 
